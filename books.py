@@ -68,6 +68,7 @@ async def read_category_by_query(category:str):
     # con parametro tipo query, sin parametro dinamico
     # este endpoint se movio a esta posicion para evitar que se pdieran mas parametros
     # como el endpoint de abajo que pide author y categoria
+    #LOS ENDPOINTS MAS PEQUEÑOS SE COLOCAN ANTES DE LOS MAS  GRANDES 
 
 @app.get("/books/byauthor/")
 async def read_books_by_author_path(author: str):
@@ -121,7 +122,7 @@ async def delete_book(book_title:str):
 
 
 """
-Gety all books from a specific author using path or query parameters
+Get all books from a specific author using path or query parameters
 """
 
  # de esta forma es un con parametro de ruta o dinamico
