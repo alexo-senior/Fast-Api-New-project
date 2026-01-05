@@ -40,17 +40,19 @@ class BookRequest(BaseModel)       :
     description: str= Field(min_length=1, max_length=100)
     #greater than or less than(mayor que o menor que)
     rating: int= Field(gt=0, lt=6) # puntuacion entre 1 y 5
-    published_date:int = 2012
+    # aceptamos el alias "published_data" desde el JSON
+    published_date: int = Field(gt=1999, lt=2031, alias="published_data")
     
-    #para usarr mas descriptivas a traves de swagger
+    # para usar ejemplos descriptivos en Swagger y permitir alias
     model_config = {
+        "populate_by_name": True,# se hace para aceptar alias, por si hay errores de nombres
         "json_schema_extra": {
             "example":{
                 "title": "A new book",
                 "author":"codinwithAlexis",
                 "description":"A new description of a book",
-                "rating":5
-                
+                "rating":5,
+                "published_data": 2029 # aqui coloque el alias data en vez de date
             }
         }
     }
@@ -62,12 +64,12 @@ class BookRequest(BaseModel)       :
     
 BOOKS = [
     
-    BOOK(1, 'computer science pro', 'codingwithalexis', 'a very nice book', 5,2024),
-    BOOK(2, 'be fast wth fastapi', 'codingwithalexis', 'a great book', 5,2025),
-    BOOK(3, 'master endpoints', 'codingwithalexis', 'a awesone book', 5,2023),
-    BOOK(4, 'HP1', 'author 1', 'book description', 2,2022),
-    BOOK(5, 'HP2', 'author 2', 'book description', 3,2021),
-    BOOK(6, 'HP3', 'author 3', 'book description', 1,2019)
+    BOOK(1, 'computer science pro', 'codingwithalexis', 'a very nice book', 5,2030),
+    BOOK(2, 'be fast wth fastapi', 'codingwithalexis', 'a great book', 5,2030),
+    BOOK(3, 'master endpoints', 'codingwithalexis', 'a awesone book', 5,2029),
+    BOOK(4, 'HP1', 'author 1', 'book description', 2,2028),
+    BOOK(5, 'HP2', 'author 2', 'book description', 3,2027),
+    BOOK(6, 'HP3', 'author 3', 'book description', 1,2026)
     
 ]
 
@@ -94,6 +96,20 @@ async def read_book_by_rating(book_rating:int):
         if book.rating == book_rating: #si el rating del libro es coincide con el rating
             books_to_return.append(book) #agrega a la lista de libros e libro
     return books_to_return# retorna el libro agregado
+
+
+
+# CONSULTAR LIBRO POR FECHA DE PUBLICACION, ULTIMO ENDPOINT
+
+@app.get("/book/published")
+async def read_books_by_published_date(published_date:int):
+    books_to_return =[] # crea una lista vacia, espera ser llenada 
+    for book in BOOKS:# recorre la lista de libros
+        if book.published_date == published_date:# si esta coincide con la fecha de publicacion
+            books_to_return.append(book) #agrega el libro a la lista 
+    return books_to_return # retorna la lista de libros encontrados con esa fecha
+            
+    
 
 
 
