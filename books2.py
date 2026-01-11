@@ -1,11 +1,17 @@
 from typing import Optional
-from fastapi import FastAPI, Body
+from fastapi import FastAPI,Path,Query , HTTPException
  # validaciones
 from pydantic import BaseModel, Field 
+from starlette import status 
 
 
 
-app = FastAPI()
+app = FastAPI(
+    title="Mi aplicacion de FastApi",
+    description="Esta es una aplicacion para manejo de libros con FastApi",    
+    version= "1.0.0")
+
+
 
  #SE HA CREADO UN NUEVO OBJETO DONDE SE INICIALIZA UN CONSTRUCTOR
  #QUE ESTABLECE TODA LA INFORMACION
@@ -75,22 +81,23 @@ BOOKS = [
 
 
 
-@app.get("/books")
+@app.get("/books", status_code=status.HTTP_200_OK)
 async def read_all_books():
     return BOOKS
 
 #BUSQUEDA POR ID parametro de ruta
 
-@app.get("/books/{book_id}")
-async def read_book(book_id: int):
+@app.get("/books/{book_id}", status_code=status.HTTP_200_OK)
+async def read_book(book_id: int = Path(gt=0)):# añade la validacion extra a parametros de ruta 
     for book in BOOKS:
         if book.id == book_id:
             return book
+    raise HTTPException(status_code=404, detail="Item not found")# si no encuentra el libro devuelve error 404
         
 #BUSQUEDA POR RATING parametro de consulta     
         
-@app.get("/books/")
-async def read_book_by_rating(book_rating:int):
+@app.get("/books/", status_code=status.HTTP_200_OK)
+async def read_book_by_rating(book_rating:int = Query(gt=0, lt=6)):# 
     books_to_return = [] # cre ala lista vacia
     for book in BOOKS: #por cada libro en la lista de libros
         if book.rating == book_rating: #si el rating del libro es coincide con el rating
@@ -101,8 +108,8 @@ async def read_book_by_rating(book_rating:int):
 
 # CONSULTAR LIBRO POR FECHA DE PUBLICACION, ULTIMO ENDPOINT
 
-@app.get("/book/published")
-async def read_books_by_published_date(published_date:int):
+@app.get("/book/published", status_code=status.HTTP_200_OK)
+async def read_books_by_published_date(published_date:int = Query(gt=1999, lt=2031)):# añade validacion para la fecha de publicacion
     books_to_return =[] # crea una lista vacia, espera ser llenada 
     for book in BOOKS:# recorre la lista de libros
         if book.published_date == published_date:# si esta coincide con la fecha de publicacion
@@ -121,7 +128,7 @@ async def read_books_by_published_date(published_date:int):
  #CON PYDANTIC SE MUESTRA EL ESQUEMA 
  
 
-@app.post("/create-book")
+@app.post("/create-book", status_code=status.HTTP_201_CREATED)
 async def create_book(book_request: BookRequest):
     new_book = BOOK(**book_request.model_dump())
     #print(type(new_book))
@@ -154,14 +161,18 @@ def find_book_id(book:BOOK):
     
 # ACTUALIZAR UN LIBRO
 
-@app.put("/books/update_book")
+@app.put("/books/update_book",status_code=status.HTTP_204_NO_CONTENT)# devuelve 204 porque fue exitosa la modificacion
 async def update_book(book: BookRequest):
+    book_changed = False
     for i in range(len(BOOKS)):
         if BOOKS[i].id == book.id:
             BOOKS[i] = book
+            book_changed = True
+            
             # mejora para devolver un mensaje de respuesta
-            return {"message": "Book updated"}
-    return {"error": "Book not found"}
+    if not book_changed:
+        raise HTTPException(status_code=404, detail=' Item not found to update')        
+    
 
             
             
@@ -169,12 +180,25 @@ async def update_book(book: BookRequest):
 
 # BORRAR UN LIBRO
             
-@app.delete("/books/{book_id}")
-async def delete_book(book_id: int):
+@app.delete("/books/{book_id}",status_code=status.HTTP_204_NO_CONTENT)
+async def delete_book(book_id: int = Path(gt=0)):# añade validacion para eliminar solo los libros con id mayor a cero  
+    book_changed = False
     for i in range(len(BOOKS)):
         if BOOKS[i].id == book_id:
             BOOKS.pop(i)
+            book_changed = True
             break
+    if not book_changed:
+        raise HTTPException(status_code=404, detail=' Item not found to delete')
+        
+    # en el caso de update y delete no se retorna nada porque el codigo 204
+    # indica que la operacion fue exitosa pero no hay contenido que devolver
+        
+        
+        
+
+        
+            
         
         
         
