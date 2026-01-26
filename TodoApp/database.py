@@ -3,7 +3,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
-
+# sql creara una bd llamada todos en la ubicacion de  la app TODOAPP
 SQLALCHEMY_DATABASE_URL = 'sqlite:///./todos.db'# la base de datos estara en la url
 
 # crea una variable engine que conecta el motor con la base de datos
