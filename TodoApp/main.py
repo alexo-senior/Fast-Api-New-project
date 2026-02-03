@@ -9,6 +9,8 @@ import models
 from models import Todos
 # importar el motor de la bd
 from database import engine, SessionLocal
+#sse hace la importacion del router
+from routers import auth
 
 
 app = FastAPI(title="TodoApp create on FastApi")
@@ -16,6 +18,10 @@ app = FastAPI(title="TodoApp create on FastApi")
 # esto ocurrira automaticamente al ejecutar la app
 
 models.Base.metadata.create_all(bind=engine) # crea las tablas en la bd si no existen
+
+# ahora incluimos el router en el main
+
+app.include_router(auth.router)
 
 def get_db():
     db = SessionLocal()
@@ -82,7 +88,9 @@ async def create_todo(db:db_dependency, todo_request:TodoRequest):
 # actualizar registros 
 
 @app.put("/todo/{todo_id}",status_code=status.HTTP_204_NO_CONTENT)
-async def update_todo(db:db_dependency, todo_id:int, todo_request:TodoRequest):
+async def update_todo(db:db_dependency, 
+                    todo_request:TodoRequest, 
+                    todo_id:int = Path(gt=0)):# el metodo TodoRrequest debe estar siempre encima de cualquier path
                     
     todo_model = db.query(Todos).filter(Todos.id == todo_id).first()
     if todo_model is None:
@@ -96,6 +104,23 @@ async def update_todo(db:db_dependency, todo_id:int, todo_request:TodoRequest):
     db.add(todo_model)
     db.commit()
     db.refresh(todo_model)
+    
+    
+# Borrar datos 
+    
+@app.delete("/todo/{todo_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def todo_delete(db:db_dependency, todo_id: int = Path(gt=0)):
+    todo_model = db.query(Todos).filter(Todos.id == todo_id).first()
+    if todo_model is None:
+        raise HTTPException(status_code=404, detail='Todo not found.')
+    db.query(Todos).filter(Todos.id == todo_id).delete()
+    
+    # confirmacion de borrado 
+    db.commit()
+    
+    
+    
+    
     
     
     
