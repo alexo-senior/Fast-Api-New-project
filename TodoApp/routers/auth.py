@@ -1,9 +1,10 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, status
 from pydantic import BaseModel
 from models import Users
 from passlib.context import CryptContext
-
-
+from database import SessionLocal
+from typing import Annotated
+from sqlalchemy.orm import Session
 
 
 router = APIRouter()
@@ -28,11 +29,28 @@ class CreateUserRequest(BaseModel):
     password:str
     role:str
     
+# el modelo para obtener la bd se copia tambien en auth:   
+    
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db # se ejecuta el codigo anterior incluido el yield antes de enviar la respuesta
+    finally:
+        db.close() # se ejecuta el cierre de la bd despues de enviar la respuesta
+# asi se asegura que solo se abra una conexion a la bd por cada peticion que se haga a la app
+
+# simplifica la declaracion de dependencias con una variable
+
+db_dependency = Annotated[Session, Depends(get_db)]
+    
         
     
 
-@router.post("/auth/")
-async def created_user(create_user_request:CreateUserRequest):
+@router.post("/auth/", status_code=status.HTTP_201_CREATED)
+# para guardar en la bd se coloca db_dedpendency como parametro
+async def created_user(db:db_dependency,
+                    create_user_request:CreateUserRequest):
+    
     #debe tener la informacion del modelo o tabla
     
     create_user_model = Users(
@@ -46,9 +64,14 @@ async def created_user(create_user_request:CreateUserRequest):
         is_active= True
         
     )
-    return create_user_model
+    # return create_user_model 
+    db.add(create_user_model) # agrega el modelo creado a la bd
+    db.commit()
+    
 
 
+# El siguiente paso es guaradar la informacion del usuario creado en una bd
+# en lugar de solo devolver una respuesta del modelo al cliente
 
 
 
