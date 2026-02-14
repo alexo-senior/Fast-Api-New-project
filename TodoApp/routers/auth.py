@@ -5,6 +5,9 @@ from passlib.context import CryptContext
 from database import SessionLocal
 from typing import Annotated
 from sqlalchemy.orm import Session
+#Esta libreria tiene su propio portal en swagger y es mas seguro
+#podremos obtener usuario y contraseña desde la solicitud
+from fastapi.security import OAuth2PasswordRequestForm
 
 
 router = APIRouter()
@@ -72,6 +75,19 @@ async def created_user(db:db_dependency,
 
 # El siguiente paso es guaradar la informacion del usuario creado en una bd
 # en lugar de solo devolver una respuesta del modelo al cliente
+
+
+# EL TOKEN SE DEVUELVE AL USUARIO CON LA INFORMACION DENTRO
+# PRIMERO SE CREA EL ENDPOINT QUE RECIBE LA INFORMACION DEL USUARIO
+
+@router.post("/token")
+async def login_for_access(form_data:Annotated[OAuth2PasswordRequestForm, Depends()],
+                        db:db_dependency):
+    return 'token'
+
+
+
+
 
 
 
