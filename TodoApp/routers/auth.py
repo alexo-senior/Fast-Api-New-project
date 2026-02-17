@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 #Esta libreria tiene su propio portal en swagger y es mas seguro
 #podremos obtener usuario y contraseña desde la solicitud
 from fastapi.security import OAuth2PasswordRequestForm
+from jose import jwt, JWTError
 
 
 router = APIRouter()
@@ -21,6 +22,18 @@ router = APIRouter()
 # esto es configuracion de base para funcionamiento
 
 bcrypt_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
+
+
+#FUNCION PARA AUTENTICACION
+
+def authenticate_user(username: str, password: str, db):
+    user = db.query(Users).filter(Users.username == username).first()
+    if not user: # si no hay ususario devuelve False
+        return False
+    if not bcrypt_context.verify(password, user.hashed_password):
+        return False
+    return True
+    
 
 #creamos una clase para autenticacion de datos
 
@@ -38,11 +51,10 @@ def get_db():
     db = SessionLocal()
     try:
         yield db # se ejecuta el codigo anterior incluido el yield antes de enviar la respuesta
-    finally:
-        db.close() # se ejecuta el cierre de la bd despues de enviar la respuesta
-# asi se asegura que solo se abra una conexion a la bd por cada peticion que se haga a la app
+    finally: 
+        db.close() 
+        
 
-# simplifica la declaracion de dependencias con una variable
 
 db_dependency = Annotated[Session, Depends(get_db)]
     
@@ -83,7 +95,18 @@ async def created_user(db:db_dependency,
 @router.post("/token")
 async def login_for_access(form_data:Annotated[OAuth2PasswordRequestForm, Depends()],
                         db:db_dependency):
-    return 'token'
+    # se llama a la funcion user_authenticated
+    user = authenticate_user(form_data.username, form_data.password,db)
+    if not user:
+        return 'failed Auhtentication'
+    return 'Succesful Authentication' 
+
+
+
+
+
+
+
 
 
 
