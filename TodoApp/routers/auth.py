@@ -15,8 +15,16 @@ from passlib.context import CryptContext
 from fastapi import HTTPException
 from jose import jwt, JWTError
 
+# AUTENTICACIONES Y AUTORIZACIONES
 
-router = APIRouter()
+# para organizar el swagger u dividir las authorizazciones de los endpoints
+
+router = APIRouter(
+    prefix= '/auth',
+    tags= ['auth']
+    
+)
+
 
 SECRET_KEY = 'ecb3072a588916deec8528324ebbe7794fdee92dd45aab26da6e011979295b7d'
 # ahora trabaja junto con secret_key parra dar mas seguridad a jwt
@@ -31,8 +39,10 @@ ALGORITHM = 'HS256'
 # esto es configuracion de base para funcionamiento
 
 bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 # para verificar cada solicitud que se nos envie desde el cliente 
-oauth2_bearer = OAuth2PasswordBearer(tokenUrl='token')
+
+oauth2_bearer = OAuth2PasswordBearer(tokenUrl='auth/token')
 
 
 #FUNCION PARA AUTENTICACION
@@ -72,10 +82,11 @@ def create_access_token(username: str, user_id: int, expires_delta:timedelta):
     return jwt.encode(encode, SECRET_KEY, algorithm=ALGORITHM)
 
 # funcion parra que los demas endpoints puedan verificar el usuario actual
+# valida el jwt, obtener la carga util y convertirla en nombre de usuario y el id
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
     try:
-        # la carga util es deecodificada y verificada la clave secreta
+        # la carga util es decodificada y verificada la clave secreta
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username:str = payload.get('sub')
         user_id: int = payload.get('id')
@@ -123,7 +134,7 @@ db_dependency = Annotated[Session, Depends(get_db)]
         
     
 
-@router.post("/auth/", status_code=status.HTTP_201_CREATED)
+@router.post("/", status_code=status.HTTP_201_CREATED)
 # para guardar en la bd se coloca db_dedpendency como parametro
 async def created_user(db:db_dependency,
                     create_user_request:CreateUserRequest):
@@ -191,11 +202,8 @@ async def login_for_access(
         db: db_dependency):
     user = authenticate_user(form_data.username, form_data.password, db)
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                                detail='Could not validate user')
     # Crear el token JWT
     token = create_access_token(user.username, user.id, timedelta(minutes=20))
     return {"access_token": token, "token_type": "bearer"} # devuelve un diccionario
@@ -209,6 +217,11 @@ async def login_for_access(
 async def list_all_users(db: db_dependency):
     users = db.query(Users).all()
     return [{"id": u.id, "username": u.username, "email": u.email} for u in users]
+
+
+
+
+
 
 
 

@@ -6,7 +6,10 @@ from starlette import status
 from models import Todos
 # importar el motor de la bd
 from database import SessionLocal
+#para validar el jwt y obtener la carga uutil(payload)
+from .auth import get_current_user
 
+# LOGICA DE LOS ENDPOINTS BASICOS DE LA APP 
 
 router = APIRouter()
 
@@ -29,6 +32,7 @@ def get_db():
 # simplifica la declaracion de dependencias 
 
 db_dependency = Annotated[Session, Depends(get_db)]
+user_dependency = Annotated[dict, Depends(get_current_user)]
         
 """@app.get("/")     
 async def read_all(db: Annotated[Session, Depends(get_db)]):
@@ -44,6 +48,7 @@ class TodoRequest(BaseModel):
     complete:bool = Field(default=False)
 
 
+# OBTENER TODOS LOS DATOS 
 
 @router.get("/")     
 async def read_all(db: db_dependency):
@@ -52,32 +57,35 @@ async def read_all(db: db_dependency):
 # AÑADIR FUNCIONALIDADES 
 # con parametro de ruta 
 #se agrega status code 200 ok para validacion de exito
+# obtener con id
 
 @router.get("/todo/{todo_id}", status_code=status.HTTP_200_OK)
 
 # se agrega path para validar que el id sea mayor a 0
 async def read_todo(db:db_dependency, todo_id:int = Path(gt=0)):
 
-    # la bd se obtiene del modelo, filtros id, y se obtiene el primer resultado
-    
+# la bd se obtiene del modelo, filtros id, y se obtiene el primer resultado    
     todo_model = db.query(Todos).filter(Todos.id == todo_id).first()
 
-    #si no es none que devuelva el modelo
+# si no es none que devuelva el modelo
     if todo_model is not None:
         return todo_model
     # sino lanzamos una excepcion
     raise HTTPException(status_code=404, detail='Todo not found')
 
 # crear registros
-
 @router.post("/todo", status_code=status.HTTP_201_CREATED)
-async def create_todo(db:db_dependency, todo_request:TodoRequest):
-    todo_model = Todos(**todo_request.dict())
+async def create_todo(user:user_dependency, db:db_dependency, 
+                    todo_request:TodoRequest):
+    # si el usuario no exite o es nulo lanza excepcion
+    if user is None:
+        raise HTTPException(status_code=401, detail='Autentication Failed')
+    todo_model = Todos(**todo_request.dict(), owner_id=user.get('id'))
 
     db.add(todo_model)
     db.commit() # guarda los cambios en la bd
-    db.refresh(todo_model)# recarga el modelo con los datos de la bd
-    return todo_model# devuelve el modelo creado 
+    db.refresh(todo_model) # recarga el modelo con los datos de la bd
+    return todo_model # devuelve el modelo creado 
 
 
 # actualizar registros 

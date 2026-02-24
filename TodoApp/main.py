@@ -4,6 +4,7 @@ import models
 from database import engine
 from routers import auth, todos
 
+# PRINCIPAL DE LA APP 
 
 app = FastAPI(title="TodoApp create on FastApi")
 # sql creara una bd llamada todos en la ubicacion de la app TODOAPP
