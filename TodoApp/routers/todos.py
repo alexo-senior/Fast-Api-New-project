@@ -50,9 +50,12 @@ class TodoRequest(BaseModel):
 
 # OBTENER TODOS LOS DATOS 
 
-@router.get("/")     
-async def read_all(db: db_dependency):
-    return db.query(Todos).all()
+@router.get("/", status_code=status.HTTP_200_OK)
+# agregamos el user: user_dependency para obtener todas las tareas del usuario     
+async def read_all(user:user_dependency, db: db_dependency):
+    # filtramospor el owner_id de todos los usuarios
+    # filtramos por el owner_id del usuario y devolvemos la lista
+    return db.query(Todos).filter(Todos.owner_id == user.get('id')).all()
 
 # AÑADIR FUNCIONALIDADES 
 # con parametro de ruta 
