@@ -53,9 +53,17 @@ class TodoRequest(BaseModel):
 @router.get("/", status_code=status.HTTP_200_OK)
 # agregamos el user: user_dependency para obtener todas las tareas del usuario     
 async def read_all(user:user_dependency, db: db_dependency):
+    if user is None:
+        raise HTTPException(status_code=401, detail='Autentication Failed')
     # filtramospor el owner_id de todos los usuarios
     # filtramos por el owner_id del usuario y devolvemos la lista
-    return db.query(Todos).filter(Todos.owner_id == user.get('id')).all()
+    # se visualizan solo los id de este usuario autenticado
+    return db.query(Todos).filter(Todos.owner_id == user.get('id'))\
+        .order_by(Todos.id.asc())\
+            .all()
+    # en caso de necesitar ver todos los id de usuarios
+    
+#return db.query(Todos).order_by(Todos.id.asc()).all()
 
 # AÑADIR FUNCIONALIDADES 
 # con parametro de ruta 
@@ -63,20 +71,23 @@ async def read_all(user:user_dependency, db: db_dependency):
 # obtener con id
 
 @router.get("/todo/{todo_id}", status_code=status.HTTP_200_OK)
-
 # se agrega path para validar que el id sea mayor a 0
-async def read_todo(db:db_dependency, todo_id:int = Path(gt=0)):
-
-# la bd se obtiene del modelo, filtros id, y se obtiene el primer resultado    
-    todo_model = db.query(Todos).filter(Todos.id == todo_id).first()
-
+async def read_todo(user: user_dependency, db:db_dependency, todo_id:int = Path(gt=0)):
+    if user is None:
+        raise HTTPException(status_code=401, detail='Autentication Failed')
+# la bd se obtiene del modelo, filtros id, y se obtiene el primer resultado
+# sin embargo se añaden filtros por el id y el owner_id      
+    todo_model = db.query(Todos).filter(Todos.id == todo_id)\
+        .filter(Todos.owner_id == user.get('id')).first()
 # si no es none que devuelva el modelo
     if todo_model is not None:
         return todo_model
     # sino lanzamos una excepcion
     raise HTTPException(status_code=404, detail='Todo not found')
 
-# crear registros
+
+
+# CREAR REGISTROS 
 @router.post("/todo", status_code=status.HTTP_201_CREATED)
 async def create_todo(user:user_dependency, db:db_dependency, 
                     todo_request:TodoRequest):
@@ -91,7 +102,7 @@ async def create_todo(user:user_dependency, db:db_dependency,
     return todo_model # devuelve el modelo creado 
 
 
-# actualizar registros 
+# ACTUALIZAR REGISTROS  
 
 @router.put("/todo/{todo_id}",status_code=status.HTTP_204_NO_CONTENT)
 async def update_todo(db:db_dependency, 
@@ -112,7 +123,7 @@ async def update_todo(db:db_dependency,
     db.refresh(todo_model)
     
     
-# Borrar datos 
+# BORRAR DATOS  
     
 @router.delete("/todo/{todo_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def todo_delete(db:db_dependency, todo_id: int = Path(gt=0)):
@@ -123,6 +134,8 @@ async def todo_delete(db:db_dependency, todo_id: int = Path(gt=0)):
     
     # confirmacion de borrado 
     db.commit()
+    
+    
     
     
     
