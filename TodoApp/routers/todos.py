@@ -63,7 +63,7 @@ async def read_all(user:user_dependency, db: db_dependency):
             .all()
     # en caso de necesitar ver todos los id de usuarios
     
-#return db.query(Todos).order_by(Todos.id.asc()).all()
+# return db.query(Todos).order_by(Todos.id.asc()).all()
 
 # AÑADIR FUNCIONALIDADES 
 # con parametro de ruta 
@@ -72,7 +72,9 @@ async def read_all(user:user_dependency, db: db_dependency):
 
 @router.get("/todo/{todo_id}", status_code=status.HTTP_200_OK)
 # se agrega path para validar que el id sea mayor a 0
-async def read_todo(user: user_dependency, db:db_dependency, todo_id:int = Path(gt=0)):
+async def read_todo(user: user_dependency, 
+                    db:db_dependency, 
+                    todo_id:int = Path(gt=0)):
     if user is None:
         raise HTTPException(status_code=401, detail='Autentication Failed')
 # la bd se obtiene del modelo, filtros id, y se obtiene el primer resultado
@@ -126,14 +128,24 @@ async def update_todo(db:db_dependency,
 # BORRAR DATOS  
     
 @router.delete("/todo/{todo_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def todo_delete(db:db_dependency, todo_id: int = Path(gt=0)):
-    todo_model = db.query(Todos).filter(Todos.id == todo_id).first()
+async def todo_delete(user:user_dependency,db:db_dependency, todo_id: int = Path(gt=0)):
+    if user is None:
+        raise HTTPException(status_code=401, detail='Autentication Failed')
+    # se hace el filtrado por el id y por el owner_id
+    todo_model = db.query(Todos).filter(Todos.id == todo_id)\
+        .filter(Todos.owner_id == user.get('id')).first()
     if todo_model is None:
         raise HTTPException(status_code=404, detail='Todo not found.')
-    db.query(Todos).filter(Todos.id == todo_id).delete()
+    db.query(Todos).filter(Todos.id == todo_id)\
+        .filter(Todos.owner_id == user.get('id')).delete()
     
     # confirmacion de borrado 
     db.commit()
+    
+    
+    
+    
+    
     
     
     

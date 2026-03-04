@@ -36,7 +36,7 @@ ALGORITHM = 'HS256'
 # de seguridad evitando ser hackeada la contraseña
 # creamos  una nueva variable que contenga Cryptcontext
 
-# esto es configuracion de base para funcionamiento
+# esto es configuracion de base para funcionamiento de contraseñas
 
 bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -69,31 +69,32 @@ def authenticate_user(username: str, password: str, db):
     return user
 
 
-# funcion para jwt 
+# funcion para jwt codificar y decodificar usuario en el jwt
     
-def create_access_token(username: str, user_id: int, expires_delta:timedelta):
+def create_access_token(username: str, user_id: int, role: str, expires_delta:timedelta):
     
     #cuando obtenemos el token se puede decodificar el jwt si esta autenticado
     # y tenemos el username y el user_id 
     
-    encode = {'sub':username, 'id':user_id}
+    encode = {'sub':username, 'id':user_id, 'role':role}
     expires = datetime.now(timezone.utc) + expires_delta
     encode.update({'exp':expires})
     return jwt.encode(encode, SECRET_KEY, algorithm=ALGORITHM)
 
-# funcion parra que los demas endpoints puedan verificar el usuario actual
+# funcion parra que los demas endpoints puedan verificar el papel del usuario actual
 # valida el jwt, obtener la carga util y convertirla en nombre de usuario y el id
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
     try:
         # la carga util es decodificada y verificada la clave secreta
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username:str = payload.get('sub')
-        user_id: int = payload.get('id')
+        username:str = payload.get('sub') # obtien el nombre de usuario
+        user_id: int = payload.get('id') # obtiene el id de usuario
+        user_role: str = payload.get('role') # verifica el rol del usuario
         if username is None or user_id is None:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                 detail='Could not validate user')
-        return {'username':username, 'id': user_id}
+        return {'username':username, 'id': user_id, 'user_role':user_role}
     
     except JWTError:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
@@ -205,7 +206,7 @@ async def login_for_access(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                 detail='Could not validate user')
     # Crear el token JWT
-    token = create_access_token(user.username, user.id, timedelta(minutes=20))
+    token = create_access_token(user.username, user.id,user.role, timedelta(minutes=20))
     return {"access_token": token, "token_type": "bearer"} # devuelve un diccionario
 
 
