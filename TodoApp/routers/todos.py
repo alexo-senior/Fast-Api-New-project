@@ -107,11 +107,16 @@ async def create_todo(user:user_dependency, db:db_dependency,
 # ACTUALIZAR REGISTROS  
 
 @router.put("/todo/{todo_id}",status_code=status.HTTP_204_NO_CONTENT)
-async def update_todo(db:db_dependency, 
+async def update_todo(user: user_dependency, #solicitar la dependencia del usuario para validar el jwt y obtener la carga util(payload)
+                    db:db_dependency, 
                     todo_request:TodoRequest, 
                     todo_id:int = Path(gt=0)):# el metodo TodoRrequest debe estar siempre encima de cualquier path
-                    
-    todo_model = db.query(Todos).filter(Todos.id == todo_id).first()
+    
+    if user is None:
+        raise HTTPException(status_code=401, detail='Authentication Failed')
+
+    todo_model = db.query(Todos).filter(Todos.id == todo_id)\
+        .filter(Todos.owner_id == user.get('id')).first() # filtra por el id y el owner_id para validar que el usuario solo pueda actualizar sus tareas
     if todo_model is None:
         raise HTTPException(status_code=404, detail='Todo not found')
     
@@ -122,7 +127,6 @@ async def update_todo(db:db_dependency,
     
     db.add(todo_model)
     db.commit()
-    db.refresh(todo_model)
     
     
 # BORRAR DATOS  
@@ -141,6 +145,11 @@ async def todo_delete(user:user_dependency,db:db_dependency, todo_id: int = Path
     
     # confirmacion de borrado 
     db.commit()
+    
+    
+    
+    
+    
     
     
     
