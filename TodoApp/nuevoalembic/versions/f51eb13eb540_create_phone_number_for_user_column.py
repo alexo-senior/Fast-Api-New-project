@@ -27,4 +27,7 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     """Downgrade schema."""
-    pass
+    #borra la columna phone_number de la tabla users
+    #revierte el cambio hecho en el upgrade
+    op.drop_column('users', 'phone_number')
+    

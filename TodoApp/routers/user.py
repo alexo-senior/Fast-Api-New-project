@@ -39,7 +39,12 @@ bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 #clase modelo para crear el acmbio de contraseña
 class userVerification(BaseModel):
     password: str
-    new_password: str = Field(min_length=6)   
+    new_password: str = Field(min_length=6)
+    
+    # SE CREA LA CLASE PARA ACTUALIZAR EL NUMERO DE TELEFONO DEL USUARIO, 
+    # SE AÑADE UNA VALIDACION DE LONGITUD MINIMA Y MAXIMA PARA ASEGURAR QUE EL NUMERO DE TELEFONO SEA VALIDO
+class PhoneUpdate(BaseModel):
+    phone_number: str = Field(min_length=10, max_length=15, description="Nuevo número de teléfono del usuario")
     
     
 
@@ -52,8 +57,14 @@ async def get_user(user: user_dependency, db: db_dependency):
         raise HTTPException(status_code=401, detail='Authentication Failed')
     return db.query(Users).filter(Users.id == user.get('id')).first()
 
+
+
 # ENDPOINT QUE PERMITE CAMBIAR LA CONTRASEÑA DE USUARIO
 
+# es ded notar que no se usa {password} en esta funcion ya que seria un parametro de ruta
+# y no seria seguro exponer la contraseña en la url, por eso se usa un modelo de 
+# pydantic para recibir la ocntraseña actula y e la nueva contraseña en el cuerpo 
+# de la solicitud 
 
 @router.put("/password", status_code=status.HTTP_204_NO_CONTENT)
 async def change_password(user:user_dependency, db:db_dependency,
@@ -70,13 +81,36 @@ async def change_password(user:user_dependency, db:db_dependency,
     db.commit()
     
     
+    # NUEVA SOLICITUD TIPO PUT QUE PERMITE ACTUALIZAR EL NUMERO DE TELEFONO DEL USUARIO
+"""    
+@router.put("/phone_number/{phone_number}",status_code=status.HTTP_204_NO_CONTENT)
+async def change_phone_number(user:user_dependency, db:db_dependency, phone_number: str):
+    if user is None:
+        raise HTTPException(status_code=401, detail='Authentication Failed')
+    # primero obtenemos el modelo del usuario a partir de su id que se obtiene del token
+    user_model = db.query(Users).filter(Users.id == user.get('id')).first()
+    # luego se actualiza el numero de telefono con el valor que recibe en el endpoint
+    user_model.phone_number = phone_number
+    # se guarad el modelo actualizado en la bd y se confirma el cambio con commit
+    db.add(user_model)
+    db.commit()
+    
+    """
+    
+    # NUEVA FORMA SEGURA DE ACTUALIZAR EL NUMERO BASADO EN PYDANTIC Y NO EN PARAMETROS DE RUTA
+    
+@router.put("/phone_number", status_code=status.HTTP_204_NO_CONTENT)
+async def change_phone_number(user: user_dependency, db: db_dependency, phone_update: PhoneUpdate):
+    if user is None:
+        raise HTTPException(status_code=401, detail='Authentication Failed')
+    # primero obtenemos el modelo del usuario a partir de su id que se obtiene del token
+    user_model = db.query(Users).filter(Users.id == user.get('id')).first()
+    # luego se actualiza el numero de telefono con el valor que recibe en el endpoint
+    user_model.phone_number = phone_update.phone_number
+    # se guarda el modelo actualizado en la bd y se confirma el cambio con commit
+    db.add(user_model)
+    db.commit()
+    # DE ESTA FORMA SE EVITA EXPONER EL NUMERO EN LA URL Y SE PUEDE AÑADIR VALIDACIONES DE LONGITUD 
+    # Y FORMATO AL NUMERO DE TELEFONO
     
     
-    
-    
-    
-
-
-
-
-

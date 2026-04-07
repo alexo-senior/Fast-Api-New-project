@@ -27,6 +27,10 @@ class Users(Base):
     
     
     
+    
+    
+    
+    
 
 # clase Todos que crara una nueva tabla llamada todos 
 

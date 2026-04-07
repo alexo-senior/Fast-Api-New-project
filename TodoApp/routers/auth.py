@@ -113,6 +113,7 @@ class CreateUserRequest(BaseModel):
     last_name:str
     password:str
     role:str
+    phone_number:str # se añade el numero de telefo para poder validar 
     
 
 # esta clase es para devolver mas informacion     
@@ -134,7 +135,8 @@ def get_db():
 db_dependency = Annotated[Session, Depends(get_db)]
     
         
-    
+    # CREACION DE USUARIOS CON JWT Y HASH DE CONTRASEÑA, 
+    # SE CREA UN ENDPOINT PARA CREAR USUARIOS Y GUARDARLOS EN LA BD
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
 # para guardar en la bd se coloca db_dedpendency como parametro
@@ -161,7 +163,8 @@ async def created_user(db:db_dependency,
         last_name=create_user_request.last_name,
         role=create_user_request.role,
         hashed_password=bcrypt_context.hash(create_user_request.password),
-        is_active= True
+        is_active=True,
+        phone_number=create_user_request.phone_number
     )
     # return create_user_model 
     db.add(create_user_model) # agrega el modelo creado a la bd
@@ -178,9 +181,7 @@ async def created_user(db:db_dependency,
         )
     return create_user_model
     
-
-
-# El siguiente paso es guaradar la informacion del usuario creado en una bd
+# El siguiente paso es guardar la informacion del usuario creado en una bd
 # en lugar de solo devolver una respuesta del modelo al cliente
 
 
@@ -218,7 +219,7 @@ async def login_for_access(
 @router.get("/users")
 async def list_all_users(db: db_dependency):
     users = db.query(Users).all()
-    return [{"id": u.id, "username": u.username, "email": u.email} for u in users]
+    return [{"id": u.id, "username": u.username, "email": u.email} for u in users]            
 
 
 
