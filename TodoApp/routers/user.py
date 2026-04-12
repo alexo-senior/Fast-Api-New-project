@@ -10,6 +10,7 @@ from database import SessionLocal
 from .auth import get_current_user
 #para trabajar con contraseñas
 from passlib.context import CryptContext
+from schemas.user import userVerification, PhoneUpdate
 
 
 # LOGICA DE LOS ENDPOINTS BASICOS DE LA APP 
@@ -36,17 +37,6 @@ user_dependency = Annotated[dict, Depends(get_current_user)]
 bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
-#clase modelo para crear el acmbio de contraseña
-class userVerification(BaseModel):
-    password: str
-    new_password: str = Field(min_length=6)
-    
-    # SE CREA LA CLASE PARA ACTUALIZAR EL NUMERO DE TELEFONO DEL USUARIO, 
-    # SE AÑADE UNA VALIDACION DE LONGITUD MINIMA Y MAXIMA PARA ASEGURAR QUE EL NUMERO DE TELEFONO SEA VALIDO
-class PhoneUpdate(BaseModel):
-    phone_number: str = Field(min_length=10, max_length=15, description="Nuevo número de teléfono del usuario")
-    
-    
 
 # ENDPOINT PARA MIRAR LA INFOORMACION DEL USUARIO
 

@@ -15,6 +15,8 @@ from passlib.context import CryptContext
 from fastapi import HTTPException
 from jose import jwt, JWTError
 
+from schemas.auth import CreateUserRequest, Token
+
 # AUTENTICACIONES Y AUTORIZACIONES
 
 # para organizar el swagger u dividir las authorizazciones de los endpoints
@@ -103,23 +105,6 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
         
     
     
-
-#creamos una clase para autenticacion de datos
-
-class CreateUserRequest(BaseModel):
-    username:str
-    email:str
-    first_name:str
-    last_name:str
-    password:str
-    role:str
-    phone_number:str # se añade el numero de telefo para poder validar 
-    
-
-# esta clase es para devolver mas informacion     
-class Token(BaseModel):
-    access_token: str
-    token_type:str 
     
 # el modelo para obtener la bd se copia tambien en auth:   
     

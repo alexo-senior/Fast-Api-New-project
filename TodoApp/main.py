@@ -16,6 +16,9 @@ models.Base.metadata.create_all(bind=engine) # crea las tablas en la bd si no ex
 
 # ahora incluimos el router en el main
 
+#punto de entrada que importa y monta los routesrs 
+
+
 app.include_router(auth.router)
 app.include_router(todos.router)
 app.include_router(admin.router)

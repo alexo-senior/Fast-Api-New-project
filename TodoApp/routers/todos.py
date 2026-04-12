@@ -9,6 +9,8 @@ from database import SessionLocal
 #para validar el jwt y obtener la carga uutil(payload)
 from .auth import get_current_user
 
+from schemas.todos import TodoRequest, TodoResponse
+
 # LOGICA DE LOS ENDPOINTS BASICOS DE LA APP 
 
 router = APIRouter()
@@ -33,24 +35,19 @@ def get_db():
 
 db_dependency = Annotated[Session, Depends(get_db)]
 user_dependency = Annotated[dict, Depends(get_current_user)]
+
+
         
 """@app.get("/")     
 async def read_all(db: Annotated[Session, Depends(get_db)]):
     return db.query(Todos).all()"""
 
-#creamos una clase basada en BaseModel de pydantic
 
-class TodoRequest(BaseModel):
-    # el id no se pasa por ser clave primaria y debe ser autoincremental
-    title:str = Field(min_length=3)
-    description:str = Field(min_length=3, max_length=100)
-    priority:int = Field(gt=0, lt=6)
-    complete:bool = Field(default=False)
 
 
 # OBTENER TODOS LOS DATOS 
 
-@router.get("/", status_code=status.HTTP_200_OK)
+@router.get("/", response_model=list[TodoResponse], status_code=status.HTTP_200_OK)
 # agregamos el user: user_dependency para obtener todas las tareas del usuario     
 async def read_all(user:user_dependency, db: db_dependency):
     if user is None:
@@ -90,7 +87,7 @@ async def read_todo(user: user_dependency,
 
 
 # CREAR REGISTROS 
-@router.post("/todo", status_code=status.HTTP_201_CREATED)
+@router.post("/todo", response_model=TodoResponse, status_code=status.HTTP_201_CREATED)
 async def create_todo(user:user_dependency, db:db_dependency, 
                     todo_request:TodoRequest):
     # si el usuario no exite o es nulo lanza excepcion
