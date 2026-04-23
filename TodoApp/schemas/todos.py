@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 #creamos una clase basada en BaseModel de pydantic
@@ -14,11 +14,10 @@ class TodoRequest(BaseModel):
     
     
 class TodoResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
     id: int
     title: str
     description: str
     priority: int
     complete: bool
-
-    class Config:
-        orm_mode = True

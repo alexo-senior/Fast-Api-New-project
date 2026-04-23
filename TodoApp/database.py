@@ -1,7 +1,6 @@
 # importar un motor para la base de datos 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, declarative_base
 
 # sql creara una bd llamada todos en la ubicacion de  la app TODOAPP
 #para conectar con sql
