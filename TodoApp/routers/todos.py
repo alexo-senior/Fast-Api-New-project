@@ -4,7 +4,10 @@ from sqlalchemy.orm import Session
 from fastapi import  APIRouter, Depends, HTTPException, Path
 from starlette import status
 from models import Todos
+
+
 # importar el motor de la bd
+
 from database import SessionLocal
 #para validar el jwt y obtener la carga uutil(payload)
 from .auth import get_current_user
