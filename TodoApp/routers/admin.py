@@ -1,3 +1,7 @@
+# paar que python evalue las anotaciones de tipo coomo strings y 
+# no como objetos reales, lo que permite usar tipos que aun no 
+# han sido definidos en el momento de la anotacion
+#from __future__ import annotations
 from typing import Annotated
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
@@ -34,7 +38,7 @@ user_dependency = Annotated[dict, Depends(get_current_user)]
 #OBTENER TODOS LOS ENDPOINTS 
 
 @router.get("/todo", status_code=status.HTTP_200_OK)
-async def read_all(user: user_dependency, db:db_dependency):
+async def read_all(user: user_dependency, db: db_dependency):
     if user is None or user.get('user_role')!= 'admin':
         raise HTTPException(status_code=401, detail='Authentication Failed')
     return db.query(Todos).all()
@@ -42,7 +46,7 @@ async def read_all(user: user_dependency, db:db_dependency):
 # BORRAR 
 
 @router.delete("/todo/{todo_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_todo(user:user_dependency, db:db_dependency, todo_id: int = Path(gt=0)):
+async def delete_todo(user:user_dependency, db: db_dependency, todo_id: int = Path(gt=0)):
     if user is None or user.get('user_role')!='admin': # si el usuario es dif de admin
         raise HTTPException(status_code=401, detail='Authentication Failed') # lanzaz una excepcion
     todo_model = db.query(Todos).filter(Todos.id == todo_id).first() # consulta el modelo y trae la primera coincidencia

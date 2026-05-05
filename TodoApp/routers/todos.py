@@ -110,7 +110,7 @@ async def create_todo(user:user_dependency, db:db_dependency,
 async def update_todo(user: user_dependency, #solicitar la dependencia del usuario para validar el jwt y obtener la carga util(payload)
                     db:db_dependency, 
                     todo_request:TodoRequest, 
-                    todo_id:int = Path(gt=0)):# el metodo TodoRrequest debe estar siempre encima de cualquier path
+                    todo_id:int = Path(gt=0)):# el metodo TodoRequest debe estar siempre encima de cualquier path
     
     if user is None:
         raise HTTPException(status_code=401, detail='Authentication Failed')
