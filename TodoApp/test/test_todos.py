@@ -78,6 +78,7 @@ client = TestClient(app)
 # que se puede usar en las pruebas para verificar el funcionamiento de la app con datos reales de prueba.
 # se crea una dependencia igual igual a la que se usa en la app, para que las pruebas puedan acceder a 
 # la base de datos de pruebas y crear los datos de prueba necesarios para las pruebas.
+
 @pytest.fixture
 def test_todo():
     todo = Todos(title="Learn to code",
@@ -95,18 +96,11 @@ def test_todo():
         connection.execute(text("DELETE FROM todos")) 
         connection.commit()# se eliminan los datos de prueba después de las pruebas para mantener la base de datos limpia
     
-    
-    
-    
-
 
 # este print prueba que la dependencia get_db ha sido sobreescrita correctamente, 
 # mostrando el diccionario de dependencias sobreescritas en la app
+
 #print(app.dependency_overrides)
-
-#ahora para cambiar nuestras dependencias en las pruebas, 
-# se crea una instancia de TestClient pasando la app como argumento
-
 
 
 # ahora se pueden escribir las pruebas para la aplicación, 
@@ -117,13 +111,54 @@ def test_read_all_authenticated(test_todo):
     assert response.status_code == status.HTTP_200_OK
     assert response.json() == [{'id': 1, 'title': 'Learn to code',
                                 'description': 'Need to learn everyday', 
-                                'priority': 5, 'complete': False}] 
+                                'priority': 5, 'complete': False,
+                                'owner_id': 1}]
     
+
+# se prueba la obtencio de un todo por id con un usuario autenticado, 
+# utilizando el fixture de prueba para crear un todo de prueba en la base 
+# de datos de pruebas, y luego haciendo una solicitud GET al endpoint 
+# correspondiente para obtener ese todo por su id, y verificando que la 
+# respuesta sea correcta y contenga los datos del todo de prueba creado. 
+# ya no espera una lista  sino un unico todo 
+def test_read_one_authenticated(test_todo):
+    response = client.get("/todo/1")
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json() == {'id': 1, 'title': 'Learn to code',
+                                'description': 'Need to learn everyday', 
+                                'priority': 5, 'complete': False,
+                                'owner_id': 1}
     
+# seprueba la obtencion por medio de un id que no existe, 
+# para verificar que la app maneja bien los casos en los 
+# se solicita un todo errado o que no existe  y devuelve la respuesta correcta 
 
+def test_read_one_athenticated_not_found():
+    response = client.get("/todo/999")
+    assert response.status_code ==404
+    assert response.json() == {'detail':'Todo not found'}
+    
+    # prueba exitosa, se muestra un mensaje indicando que la prueba ha pasado
+    print("test_read_one_athenticated_not_found passed")
+    
+# se prueba la creación de un nuevo todo, haciendo una solicitud POST al endpoint correspondiente,
+# con los datos del nuevo todo en el cuerpo de la solicitud, y verificando que la
+# respuesta sea correcta y que el nuevo todo se haya creado correctamente en la base de datos de pruebas
 
-
+def test_create_todo_(test_todo):
+    request_data={
+        'title':'New Todo',
+        'description':'New todo description',
+        'priority':5,
+        'complete':False
         
-        
-        
-
+        }
+    response = client.post('/todo/',json=request_data)
+    assert response.status_code == status.HTTP_201_CREATED
+    db = TestingSessionLocal()
+    model = db.query(Todos).filter(Todos.id == 2).first()
+    assert model.title == request_data.get('title')
+    assert model.description == request_data.get('description')
+    assert model.priority == request_data.get('priority')
+    assert model.complete == request_data.get('complete')   
+    

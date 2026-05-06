@@ -21,3 +21,4 @@ class TodoResponse(BaseModel):
     description: str
     priority: int
     complete: bool
+    owner_id: int

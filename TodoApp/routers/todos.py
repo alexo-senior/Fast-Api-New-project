@@ -70,7 +70,7 @@ async def read_all(user:user_dependency, db: db_dependency):
 #se agrega status code 200 ok para validacion de exito
 # obtener con id
 
-@router.get("/todo/{todo_id}", status_code=status.HTTP_200_OK)
+@router.get("/todo/{todo_id}", response_model=TodoResponse, status_code=status.HTTP_200_OK)
 # se agrega path para validar que el id sea mayor a 0
 async def read_todo(user: user_dependency, 
                     db:db_dependency, 
